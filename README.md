@@ -102,6 +102,18 @@ Cloudflare Pages で公開する場合は、GitHub と連携して次のよう�
 
 pnpm のバージョンは、`package.json` の `packageManager` で指定しています。
 
+### ビルドエラー `ERR_PNPM_IGNORED_BUILDS` への対応
+
+pnpm v10 以降では、セキュリティのため、依存パッケージのビルドスクリプト（postinstall など）が自動では実行されなくなりました。Cloudflare Pages のビルドで、esbuild や workerd のビルドスクリプトがブロックされ、`ERR_PNPM_IGNORED_BUILDS` が発生したため、リポジトリ直下の `pnpm-workspace.yaml` で実行を許可しています。
+
+```yaml
+allowBuilds:
+  esbuild: true
+  workerd: true
+```
+
+なお、このアプリの依存パッケージには esbuild と workerd は含まれていません（Vite 8 は rolldown を使用）。この 2つは、Cloudflare の `wrangler` を使うデプロイ工程で使われるライブラリです。同じエラーが続く場合は、Cloudflare 側のビルドコマンド・デプロイコマンドの設定も確認してください。
+
 ---
 
 ## 5. ファイル構成
@@ -111,6 +123,7 @@ pnpm のバージョンは、`package.json` の `packageManager` で指定して
 ├── vite.config.ts        Vite の設定（Tailwind CSS プラグイン）
 ├── package.json          スクリプトと依存パッケージ（pnpm で管理）
 ├── pnpm-lock.yaml        依存パッケージのバージョン固定
+├── pnpm-workspace.yaml   pnpm の設定（esbuild / workerd のビルドスクリプトを許可）
 ├── .node-version         Node.js のバージョン（Cloudflare Pages 用）
 ├── public/favicon.svg
 └── src/
@@ -173,6 +186,7 @@ pnpm のバージョンは、`package.json` の `packageManager` で指定して
 | 10 | 研修の条件「**社内の推奨技術スタックで作る（Vite ＋ Tailwind CSS）**」の意味は分かるか | Vite と Tailwind CSS の役割、作り直しが必要になる点、Node.js が未インストールであることを説明した |
 | 11 | **Node.js が必要な理由**を教えてほしい | Vite・Tailwind CSS・pnpm が Node.js 上で動くツールであり、必要なのは開発する PC だけで、利用者には不要であることを説明した |
 | 12 | 確認事項への回答をもとに**対応を進めて**ほしい（TypeScript は使う、フレームワークなし、Tailwind は最新、Node.js と pnpm のインストール、リポジトリは別にする、README は新リポジトリへ） | Node.js と pnpm をインストールした。Vite（vanilla-ts）のプロジェクトを作成し、画面と 203問を移植した。zod による入力チェックを追加し、ブラウザでの自動テストで確認したうえで、新しい非公開リポジトリに push した |
+| 13 | Cloudflare Pages のビルドで **`ERR_PNPM_IGNORED_BUILDS`** が発生した。原因（pnpm のビルドスクリプトの自動実行ブロック）と対処（`pnpm-workspace.yaml` に `allowBuilds` を記載）を伝え、ファイルを作成してほしい | 依存パッケージを調べ、このアプリ自体は esbuild・workerd を使っていないことを報告した。そのうえで指定どおりにファイルを作成し、CI と同じ条件（`--frozen-lockfile`）でのインストールとビルドが通ることを確認して push した。エラーが続く場合に Cloudflare 側の設定（デプロイコマンドなど）で確認すべき点も伝えた |
 
 ### 依頼するときに気を付けたこと
 
