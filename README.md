@@ -114,6 +114,46 @@ allowBuilds:
 
 なお、このアプリの依存パッケージには esbuild と workerd は含まれていません（Vite 8 は rolldown を使用）。この 2つは、Cloudflare の `wrangler` を使うデプロイ工程で使われるライブラリです。同じエラーが続く場合は、Cloudflare 側のビルドコマンド・デプロイコマンドの設定も確認してください。
 
+### Basic 認証（`functions/_middleware.ts`）
+
+公開したサイト全体に、Basic 認証（ユーザー名とパスワードによるアクセス制限）をかけています。Cloudflare Pages Functions のミドルウェアとして、ページを表示する前に認証情報を確認します。
+
+- Cloudflare Pages は Apache などの Web サーバーではないため、`.htaccess` や `.htpasswd`（パスワードファイル）は使いません。作成もされません。
+- ユーザー名とパスワードは**コードやリポジトリには書かず**、Cloudflare の環境変数（シークレット）に保存します。
+
+#### 設定方法
+
+1. Cloudflare のダッシュボードで、プロジェクトの「設定」→「変数とシークレット」を開きます。
+2. 次の 2つを、種類「シークレット」で追加します。本番環境に設定し、プレビュー環境を使う場合はそちらにも設定します。
+
+   | 変数名 | 内容 |
+   |---|---|
+   | `BASIC_AUTH_USER` | ユーザー名 |
+   | `BASIC_AUTH_PASSWORD` | パスワード |
+
+3. 再デプロイします（環境変数の変更は、次のデプロイから反映されます）。
+4. 公開ページを開き、ユーザー名とパスワードの入力画面が表示されることを確認します。
+
+#### 動作
+
+| 状況 | 応答 |
+|---|---|
+| 環境変数が未設定（空欄）、またはどちらか一方だけ設定 | 503（サイトを表示せず「設定されていません」と表示。設定漏れのまま無防備に公開されるのを防ぐため） |
+| 認証情報なし・ユーザー名またはパスワードが違う・形式が不正 | 401（ブラウザに入力画面を出し直す） |
+| 正しいユーザー名とパスワード | サイトを表示 |
+
+- パスワードの比較は、比較にかかる時間から内容を推測されないよう、SHA-256 にしてから全バイトを比べています。
+- 日本語や `:` を含むユーザー名・パスワードにも対応しています。
+
+#### ローカルで Pages Functions を動かす場合
+
+`.dev.vars.example` を `.dev.vars` という名前でコピーし、値を入れます（`.dev.vars` は `.gitignore` で Git の対象外にしています）。`pnpm dev`（Vite の開発サーバー）では Pages Functions は動かないため、Basic 認証はかかりません。
+
+#### 注意
+
+- 実際のユーザー名とパスワードは、コード・README・コミットメッセージに書かないでください。
+- パスワードファイル（`.htpasswd`）を `public` フォルダなどに置かないでください。公開されて誰でもダウンロードできてしまいます。
+
 ---
 
 ## 5. ファイル構成
@@ -125,6 +165,9 @@ allowBuilds:
 ├── pnpm-lock.yaml        依存パッケージのバージョン固定
 ├── pnpm-workspace.yaml   pnpm の設定（esbuild / workerd のビルドスクリプトを許可）
 ├── .node-version         Node.js のバージョン（Cloudflare Pages 用）
+├── .dev.vars.example     Basic 認証の環境変数のひな形（値は空欄）
+├── functions/
+│   └── _middleware.ts    Basic 認証（Cloudflare Pages Functions のミドルウェア）
 ├── public/favicon.svg
 └── src/
     ├── main.ts           画面の動作（出題・採点・一覧・成績の保存と集計・CSV 書き出し）
@@ -187,6 +230,7 @@ allowBuilds:
 | 11 | **Node.js が必要な理由**を教えてほしい | Vite・Tailwind CSS・pnpm が Node.js 上で動くツールであり、必要なのは開発する PC だけで、利用者には不要であることを説明した |
 | 12 | 確認事項への回答をもとに**対応を進めて**ほしい（TypeScript は使う、フレームワークなし、Tailwind は最新、Node.js と pnpm のインストール、リポジトリは別にする、README は新リポジトリへ） | Node.js と pnpm をインストールした。Vite（vanilla-ts）のプロジェクトを作成し、画面と 203問を移植した。zod による入力チェックを追加し、ブラウザでの自動テストで確認したうえで、新しい非公開リポジトリに push した |
 | 13 | Cloudflare Pages のビルドで **`ERR_PNPM_IGNORED_BUILDS`** が発生した。原因（pnpm のビルドスクリプトの自動実行ブロック）と対処（`pnpm-workspace.yaml` に `allowBuilds` を記載）を伝え、ファイルを作成してほしい | 依存パッケージを調べ、このアプリ自体は esbuild・workerd を使っていないことを報告した。そのうえで指定どおりにファイルを作成し、CI と同じ条件（`--frozen-lockfile`）でのインストールとビルドが通ることを確認して push した。エラーが続く場合に Cloudflare 側の設定（デプロイコマンドなど）で確認すべき点も伝えた |
+| 14 | Cloudflare Pages で **Basic 認証**をかけたい。`functions/_middleware.ts` を追加する方法で、ユーザー名とパスワードは空欄にしておいてほしい | `.htpasswd` は Cloudflare Pages では使えないことを説明した。認証情報を環境変数から読み込むミドルウェアと、値が空欄のひな形（`.dev.vars.example`）を作成した。未設定・誤り・正しい場合の応答を Node.js で確認し、環境変数を設定してから push する手順を案内した |
 
 ### 依頼するときに気を付けたこと
 

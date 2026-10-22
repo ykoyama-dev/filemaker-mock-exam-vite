@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Cloudflare（認証情報を含むローカル用の環境変数ファイル）
+.dev.vars
+.wrangler

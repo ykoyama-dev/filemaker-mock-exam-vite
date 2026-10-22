@@ -1,0 +1,5 @@
+# Basic 認証のユーザー名とパスワード（ローカルで Pages Functions を動かす場合のひな形）
+# このファイルを .dev.vars にコピーして値を入れる。.dev.vars は Git に含めない
+# 本番は Cloudflare のダッシュボード（設定 → 変数とシークレット）で設定する
+BASIC_AUTH_USER=
+BASIC_AUTH_PASSWORD=
