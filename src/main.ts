@@ -4,6 +4,7 @@ import { z } from "zod";
 import { $, el } from "./dom";
 import { loadExams } from "./data/exams";
 import * as storage from "./storage";
+import { seedDemoHistory } from "./demo-seed";
 import {
   HistorySchema, ListFilterSchema, ModeSchema, PracticeSettingsSchema, SeenSchema,
   type Exam, type HistoryRecord, type Mode, type Question,
@@ -677,6 +678,7 @@ function renderDetail(): void {
 }
 
 // ===== 起動 =====
+seedDemoHistory(examResults.flatMap((r) => (r.ok ? [r.exam] : [])));
 initTop();
 initStart();
 initQuizButtons();
