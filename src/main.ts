@@ -4,7 +4,8 @@ import { z } from "zod";
 import { $, el } from "./dom";
 import { loadExams } from "./data/exams";
 import * as storage from "./storage";
-import { seedDemoHistory } from "./demo-seed";
+// ダミー成績の自動投入は投入済みのため無効化（二度と動かさない）
+// import { seedDemoHistory } from "./demo-seed";
 import {
   HistorySchema, ListFilterSchema, ModeSchema, PracticeSettingsSchema, SeenSchema,
   type Exam, type HistoryRecord, type Mode, type Question,
@@ -678,7 +679,8 @@ function renderDetail(): void {
 }
 
 // ===== 起動 =====
-seedDemoHistory(examResults.flatMap((r) => (r.ok ? [r.exam] : [])));
+// ダミー成績の自動投入は無効化（二度と動かさない）
+// seedDemoHistory(examResults.flatMap((r) => (r.ok ? [r.exam] : [])));
 initTop();
 initStart();
 initQuizButtons();
